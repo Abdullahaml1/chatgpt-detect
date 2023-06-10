@@ -169,6 +169,7 @@ def evaluate(data_loader, model, loss_fun, device):
             error += torch.nonzero(top_i.squeeze().cpu() - labels.cpu()).size(0)
 
             # Loss
+            print(logits.device)
             total_loss += loss_fun(logits, labels).item()
    
    
