@@ -357,6 +357,12 @@ if __name__ == "__main__":
     # tokenizer
     tokenizer = AutoTokenizer.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta")
 
+
+    #get class to int mapping
+    class2ind, ind2class = class_labels(['human_answers', 'chatgpt_answers'])  
+    num_classes = len(class2ind)
+    print('Number of Classes=', num_classes)
+
     # batchify function
     batchify = Batchify(tokenizer)
 
@@ -368,10 +374,6 @@ if __name__ == "__main__":
 
 
 
-    #get class to int mapping
-    class2ind, ind2class = class_labels(['human_answers', 'chatgpt_answers'])  
-    num_classes = len(class2ind)
-    print('Number of Classes=', num_classes)
 
     if args.test:
         if args.test_type== 'paper':
