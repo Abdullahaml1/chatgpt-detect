@@ -150,7 +150,9 @@ def evaluate(data_loader, model, device):
             labels = batch['labels']
       
               
-            logits = model(**ans_tokens) # shape [batch x num_classes]
+            logits = model(**ans_tokens, torchscript=True) # shape [batch x num_classes]
+            print(type(logits))
+            print(logits.shape)
             top_n, top_i = logits.topk(1)
             num_examples += ans_tokens.size(0)
             error += torch.nonzero(top_i.squeeze() - torch.LongTensor(labels)).size(0)
@@ -292,6 +294,7 @@ if __name__ == "__main__":
     print('Number of Classes=', len(class2ind))
 
     if args.test:
+        print('start Testing ..........')
         #### Load batchifed dataset
         test_dataset = UnpackedDataset(dataset, class2ind)
         test_sampler = torch.utils.data.sampler.SequentialSampler(test_dataset)
