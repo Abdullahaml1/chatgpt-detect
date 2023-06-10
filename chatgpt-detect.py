@@ -151,9 +151,9 @@ def evaluate(data_loader, model, loss_fun, device):
     model.to(device)
     model.eval()
     num_examples = 0
-    error = 0                              
+    error = 0
    
-    total_loss = 0.0
+    total_loss = torch.tensor(0.0).to(device)
     num_examples = 0
     with torch.no_grad():
         for idx, batch in tqdm(enumerate(data_loader)):
@@ -166,16 +166,17 @@ def evaluate(data_loader, model, loss_fun, device):
             logits = model(**ans_tokens)[0] # shape [batch x num_classes]
             top_n, top_i = logits.topk(1)
             num_examples += labels.size(0)
-            error += torch.nonzero(top_i.squeeze().cpu() - labels.cpu()).size(0)
+            error += torch.nonzero(top_i.cpu().squeeze() - labels.cpu()).size(0)
 
             # Loss
             print(logits.device)
-            total_loss += loss_fun(logits, labels).item()
+            print(logits.device)
+            total_loss += loss_fun(logits, labels)
    
    
         # Accuracy
         accuracy = 1 - error / num_examples
-        avg_loss = total_loss/num_examples
+        avg_loss = total_loss.cpu().item()/num_examples
     # print(f'Dev accuracy={accuracy:f}, Dev average Loss={avg_loss:f}')
     return accuracy, avg_loss
 
