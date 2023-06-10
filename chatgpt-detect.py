@@ -223,8 +223,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
         pred = model(**ans_tokens)[0]
 
         # computing loss
-        pred.to(device)
-        loss = criterion(pred, labels)
+        loss = criterion(pred.cpu(), labels.cpu())
 
 
         # computing gradient
