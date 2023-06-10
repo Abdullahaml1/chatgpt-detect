@@ -11,6 +11,7 @@ import time
 import nltk
 import matplotlib.pyplot as plt
 
+from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from datasets import load_dataset, load_dataset_builder, get_dataset_split_names
 
@@ -155,7 +156,7 @@ def evaluate(data_loader, model, loss_fun, device):
     total_loss = 0.0
     num_examples = 0
     with torch.no_grad():
-        for idx, batch in enumerate(data_loader):
+        for idx, batch in tqdm(enumerate(data_loader)):
             ans_tokens = batch['ans_tokens']
             ans_tokens.to(device)
             labels = batch['labels']
@@ -206,7 +207,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
     dev_acc_list = []
     new_best = False
 
-    for idx, batch in enumerate(train_data_loader):
+    for idx, batch in tqdm(enumerate(train_data_loader)):
         ans_tokens = batch['ans_tokens']
         labels = batch['labels']
 
