@@ -362,7 +362,7 @@ if __name__ == "__main__":
 
     ### Load data
     dataset = load_data()
-    dataset = UnpackedDataset(dataset)
+    dataset = UnpackedDataset(dataset, class2ind)
     print('Lenght of dataset', len(dataset))
     train_idx, dev_idx, test_idx = split_dataset(0.1, 0.1, len(dataset))
 
