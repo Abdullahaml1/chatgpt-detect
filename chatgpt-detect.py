@@ -148,7 +148,6 @@ def evaluate(data_loader, model, loss_fun, device):
     device: cpu of gpu
     """
                   
-    model.to(device)
     loss_fun.to(device)
     model.eval()
     num_examples = 0
@@ -194,7 +193,6 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
     device: cpu of gpu
     """
 
-    model.to(devie)
     model.train()
     optimizer = torch.optim.Adamax(model.parameters(), lr=5e-5)
     criterion = nn.CrossEntropyLoss().to(device)
@@ -387,6 +385,7 @@ if __name__ == "__main__":
         else:
             model = torch.load(args.load_model)
 
+        model.to(device)
         print('start Testing ..........')
         #### Load batchifed dataset
         test_sampler = torch.utils.data.SubsetRandomSampler(test_idx)
