@@ -90,9 +90,6 @@ class UnpackedDataset(torch.utils.data.Dataset):
       def __len__(self):
           return len(self.samples)
 
-unpacked_ds = UnpackedDataset(dataset, class2ind)
-print(len(unpacked_ds))
-
 
     
 
