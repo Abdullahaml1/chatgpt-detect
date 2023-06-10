@@ -349,7 +349,7 @@ if __name__ == "__main__":
     parser.add_argument('--save-model', type=str, default='chat-detect-model.pt')
     parser.add_argument('--load-model', type=str, default='chat-detect-model.pt')
     parser.add_argument("--limit", help="Number of training documents", type=int, default=-1, required=False)
-    parser.add_argument('--checkpoint', type=int, default=1024)
+    parser.add_argument('--checkpoint', type=int, default=4000)
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=2, required=False)
     parser.add_argument('--show-dev-error-samples', action='store_true', help='Print Error Dev samples', default=False)
     parser.add_argument("--test-type", help="{paper, model}", type=str, default='paper', required=False)
