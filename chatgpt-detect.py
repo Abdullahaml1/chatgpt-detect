@@ -239,7 +239,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
 
         # Logging train accuracy
         _, top_i = pred.topk(1, dim=1)
-        train_error = torch.nonzero(labels.squeeze().cpu() - top_i.squeeze().cpu()).shape[0]
+        train_error += torch.nonzero(labels.squeeze().cpu() - top_i.squeeze().cpu()).shape[0]
         num_train_examples += labels.shape[0]
 
         # Reaching checkpoint
