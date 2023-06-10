@@ -127,7 +127,7 @@ class Batchify(object):
 
 
 # evalute funciton
-def evaluate(data_loader, model, device):
+def evaluate(data_loader, model, loss_fun, device):
     """
     evaluate the current model, get the accuracy for dev/test set
     Keyword arguments:
@@ -154,13 +154,16 @@ def evaluate(data_loader, model, device):
             top_n, top_i = logits.topk(1)
             num_examples += labels.size(0)
             error += torch.nonzero(top_i.squeeze() - torch.LongTensor(labels)).size(0)
+
+            # Loss
+            total_loss += loss_fun(logits, labels).item()
    
    
         # Accuracy
         accuracy = 1 - error / num_examples
         avg_loss = total_loss/num_examples
     # print(f'Dev accuracy={accuracy:f}, Dev average Loss={avg_loss:f}')
-    return accuracy
+    return accuracy, avg_loss
 
 
 def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
@@ -180,32 +183,6 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
 
 
 
-class ChatgptDetectModel(nn.Module):
-    """High level model that handles intializing the underlying network
-    architecture, saving, updating examples, and predicting examples.
-    """
-
-
-
-    def __init__(self, n_classes, vocab_size, emb_dim=50,
-                 n_hidden_units=50, nn_dropout=.5, padding_idx=0,
-                 glove_embeddings=None):
-        super().__init__()
-        pass
-        
-        
-       
-    def forward(self, input_text, text_len, is_prob=False):
-        """
-        Model forward pass, returns the logits of the predictions.
-        
-        Keyword arguments:
-        input_text : vectorized question text  [batch x questin_list]
-        text_len : batch * 1, text length for each question
-        is_prob: if True, output the softmax of last layer
-        """
-
-        pass
 
 def show_error_samples(data_loader, model, loss_fun,
         ind2word_arr, ind2class, device):
@@ -262,8 +239,8 @@ if __name__ == "__main__":
     parser.add_argument('--grad-clipping', type=int, default=5)
     parser.add_argument('--resume', action='store_true', default=False)
     parser.add_argument('--test', action='store_true', default=False)
-    parser.add_argument('--save-model', type=str, default='q_type.pt')
-    parser.add_argument('--load-model', type=str, default='q_type.pt')
+    parser.add_argument('--save-model', type=str, default='chat-detect-model.pt')
+    parser.add_argument('--load-model', type=str, default='chat-detect-model.pt')
     parser.add_argument("--limit", help="Number of training documents", type=int, default=-1, required=False)
     parser.add_argument('--checkpoint', type=int, default=21)
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=2, required=False)
@@ -305,8 +282,8 @@ if __name__ == "__main__":
                                                 sampler=test_sampler,
                                                 num_workers=args.num_workers,
                                                 collate_fn=batchify)
-        acc = evaluate(test_loader, model, device)
-        print(f'Test Accuracy={acc:f}')
+        acc, avg_loss = evaluate(test_loader, model, device)
+        print(f'Test Accuracy={acc:f}, Test Avg loss={avg_loss}')
 
     # # show Error Dev Samples
     # elif args.show_dev_error_samples:
