@@ -194,9 +194,10 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
     device: cpu of gpu
     """
 
+    model.to(devie)
     model.train()
     optimizer = torch.optim.Adamax(model.parameters(), lr=5e-5)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss().to(device)
     print_loss_total = 0
     epoch_loss_total = 0
     start = time.time()
