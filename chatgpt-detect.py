@@ -151,7 +151,7 @@ def evaluate(data_loader, model, device):
       
               
             logits = model(**ans_tokens) # shape [batch x num_classes]
-            print(type(logits))
+            print(len(logits))
             print(logits.shape)
             top_n, top_i = logits.topk(1)
             num_examples += ans_tokens.size(0)
