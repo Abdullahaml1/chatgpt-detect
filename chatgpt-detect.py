@@ -153,7 +153,7 @@ def evaluate(data_loader, model, loss_fun, device):
     num_examples = 0
     error = 0
    
-    total_loss = torch.tensor(0.0).to(device)
+    total_loss = torch.tensor(0.0)
     num_examples = 0
     with torch.no_grad():
         for idx, batch in tqdm(enumerate(data_loader)):
@@ -171,7 +171,7 @@ def evaluate(data_loader, model, loss_fun, device):
             # Loss
             print(logits.device)
             print(logits.device)
-            total_loss += loss_fun(logits, labels)
+            total_loss += loss_fun(logits.cpu(), labels.cpu())
    
    
         # Accuracy
