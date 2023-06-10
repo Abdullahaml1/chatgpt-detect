@@ -384,10 +384,10 @@ if __name__ == "__main__":
         test_loader = torch.utils.data.DataLoader(dataset,
                                                 batch_size=args.batch_size,
                                                 sampler=test_sampler,
-                                                num_workers=args.num_workers,
-                                                collate_fn=batchify)
+                                                num_workers=args.num_workers)
+                                                # collate_fn=batchify)
         item = next(iter(test_loader))
-        print(item['labels'].shape)
+        print(len(item))
         # acc, avg_loss = evaluate(test_loader, model,nn.CrossEntropyLoss(), device)
         print(f'Test Accuracy={acc:f}, Test Avg loss={avg_loss}')
 
