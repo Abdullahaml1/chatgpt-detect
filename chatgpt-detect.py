@@ -166,7 +166,7 @@ def evaluate(data_loader, model, loss_fun, device):
             logits = model(**ans_tokens)[0] # shape [batch x num_classes]
             top_n, top_i = logits.topk(1)
             num_examples += labels.size(0)
-            error += np.nonzero(top_i.squeeze().numpy() - labels.numpy()).shape[0]
+            error += torch.nonzero(top_i.squeeze().cpu() - labels.cpu()).size(0)
 
             # Loss
             total_loss += loss_fun(logits, labels).item()
