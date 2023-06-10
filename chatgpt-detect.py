@@ -293,7 +293,7 @@ if __name__ == "__main__":
     print('Number of Classes=', len(class2ind))
 
     if args.test:
-        if args.test_type= 'paper':
+        if args.test_type== 'paper':
             model = AutoModelForSequenceClassification.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta", torchscript=True)
         else:
             pass
