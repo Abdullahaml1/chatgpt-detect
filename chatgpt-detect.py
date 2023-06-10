@@ -178,7 +178,98 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
     device: cpu of gpu
     """
 
-    pass
+    model.train()
+    optimizer = torch.optim.Adamax(model.parameters())
+    criterion = nn.CrossEntropyLoss()
+    print_loss_total = 0
+    epoch_loss_total = 0
+    start = time.time()
+
+    #### modify the following code to complete the training funtion
+    train_loss_list= []
+    train_acc_list = []
+    train_error = 0
+    num_train_examples = 0
+
+    dev_loss_list = []
+    dev_acc_list = []
+    new_best = False
+
+    for idx, batch in enumerate(train_data_loader):
+        ans_tokens = batch['ans_tokens']
+        labels = batch['labels']
+
+        #### Your code here
+        ans_tokens.to(device)
+        labels.to(device)
+
+
+        # forward
+        pred = model(**ans_tokens)[0]
+
+        # computing loss
+        loss = criterion(pred, labels)
+
+
+        # computing gradient
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+
+        # clip_grad_norm_(model.parameters(), args.grad_clipping) 
+        print_loss_total += loss.data.numpy()
+        epoch_loss_total += loss.data.numpy()
+
+
+        # Logging train accuracy
+        _, top_i = pred.topk(1, dim=1)
+        train_error = torch.nonzero(labels.squeeze() - top_i.squeeze()).shape[0]
+        num_train_examples += question_text.shape[0]
+
+        # Reaching checkpoint
+        if idx % args.checkpoint == 0 and idx > 0:
+
+
+            # Applying Devset
+            dev_curr_accuracy, dev_curr_loss = evaluate(dev_data_loader, model,
+                    nn.CrossEntropyLoss(), device)
+
+            # Logging Train Loss and Accuracy
+            # print_loss_avg = print_loss_total / args.checkpoint
+            print_loss_avg = print_loss_total / num_train_examples
+            train_loss_list.append(print_loss_avg.item())
+
+            train_acc = 1- train_error/num_train_examples
+            train_acc_list.append(train_acc)
+
+            num_train_examples = 0
+            train_error =0
+            print_loss_total = 0
+
+            # Logging Dev Loss and Accuracy
+            dev_acc_list.append(dev_curr_accuracy)
+            dev_loss_list.append(dev_curr_loss)
+
+            if accuracy < dev_curr_accuracy:
+                print('Saving Model ............')
+                torch.save(model, args.save_model)
+
+                new_best = True
+                accuracy = dev_curr_accuracy
+
+
+            # print('number of steps: %d, loss: %.5f time: %.5f' % (idx, print_loss_avg, time.time()- start))
+            print(f'# of steps={idx}, Avg Train Loss={print_loss_avg:f}'+ 
+                    f', Avg Dev Loss={dev_curr_loss:f}, Train Acc={train_acc:f}'+ 
+                    f', Dev Acc={dev_curr_accuracy:f}, Time: {time.time()-start:f}') 
+
+    return {'dev_best_acc': accuracy,
+            'new_best': new_best,
+            'train_acc_epoch': train_acc_list,
+            'train_loss_epoch': train_loss_list,
+            'dev_acc_epoch': dev_acc_list,
+            'dev_loss_epoch': dev_loss_list}
 
 
 
@@ -242,7 +333,7 @@ if __name__ == "__main__":
     parser.add_argument('--save-model', type=str, default='chat-detect-model.pt')
     parser.add_argument('--load-model', type=str, default='chat-detect-model.pt')
     parser.add_argument("--limit", help="Number of training documents", type=int, default=-1, required=False)
-    parser.add_argument('--checkpoint', type=int, default=21)
+    parser.add_argument('--checkpoint', type=int, default=1024)
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=2, required=False)
     parser.add_argument('--show-dev-error-samples', action='store_true', help='Print Error Dev samples', default=False)
     parser.add_argument("--test-type", help="{paper, model}", type=str, default='paper', required=False)
@@ -252,7 +343,7 @@ if __name__ == "__main__":
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if args.cuda else "cpu")
 
-    # model name
+    # tokenizer
     tokenizer = AutoTokenizer.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta")
 
     # batchify function
@@ -272,7 +363,8 @@ if __name__ == "__main__":
         if args.test_type== 'paper':
             model = AutoModelForSequenceClassification.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta", torchscript=True)
         else:
-            pass
+            model = torch.load(args.load_model)
+
         print('start Testing ..........')
         #### Load batchifed dataset
         test_dataset = UnpackedDataset(dataset, class2ind)
@@ -282,7 +374,7 @@ if __name__ == "__main__":
                                                 sampler=test_sampler,
                                                 num_workers=args.num_workers,
                                                 collate_fn=batchify)
-        acc, avg_loss = evaluate(test_loader, model, device)
+        acc, avg_loss = evaluate(test_loader, model,nn.CrossEntropyLoss(), device)
         print(f'Test Accuracy={acc:f}, Test Avg loss={avg_loss}')
 
     # # show Error Dev Samples
