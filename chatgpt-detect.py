@@ -167,8 +167,8 @@ def evaluate(data_loader, model, loss_fun, device):
             logits = model(**ans_tokens)[0] # shape [batch x num_classes]
             top_n, top_i = logits.topk(1)
             num_examples += labels.size(0)
-            new_error = torch.nonzero(top_i.squeeze() - labels).size(0)
-            error += new_error.cpu()
+            new_error = torch.nonzero(top_i.squeeze() - labels)
+            error += new_error.cpu().shape[0]
 
             # Loss
             loss = loss_fun(logits, labels)
