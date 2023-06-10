@@ -216,7 +216,6 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
 
         #### Your code here
         ans_tokens.to(device)
-        print('device', ans_tokens['input_ids'].device)
         labels.to(device)
 
 
