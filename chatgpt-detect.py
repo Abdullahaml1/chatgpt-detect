@@ -149,11 +149,12 @@ def evaluate(data_loader, model, loss_fun, device):
     """
                   
     model.to(device)
+    loss_fun.to(device)
     model.eval()
     num_examples = 0
     error = 0
    
-    total_loss = torch.tensor(0.0)
+    total_loss = torch.tensor(0.0).to(device)
     num_examples = 0
     with torch.no_grad():
         for idx, batch in tqdm(enumerate(data_loader)):
@@ -166,12 +167,10 @@ def evaluate(data_loader, model, loss_fun, device):
             logits = model(**ans_tokens)[0] # shape [batch x num_classes]
             top_n, top_i = logits.topk(1)
             num_examples += labels.size(0)
-            error += torch.nonzero(top_i.cpu().squeeze() - labels.cpu()).size(0)
+            error += torch.nonzero(top_i.cpu().squeeze() - labels).size(0)
 
             # Loss
-            print(logits.device)
-            print(logits.device)
-            total_loss += loss_fun(logits.cpu(), labels.cpu())
+            total_loss += loss_fun(logits, labels)
    
    
         # Accuracy
@@ -195,7 +194,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
 
     model.train()
     optimizer = torch.optim.Adamax(model.parameters(), lr=5e-5)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss().to(device)
     print_loss_total = 0
     epoch_loss_total = 0
     start = time.time()
@@ -239,7 +238,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
 
         # Logging train accuracy
         _, top_i = pred.topk(1, dim=1)
-        train_error = torch.nonzero(labels.squeeze() - top_i.squeeze()).shape[0]
+        train_error = torch.nonzero(labels.squeeze().cpu() - top_i.squeeze().cpu()).shape[0]
         num_train_examples += labels.shape[0]
 
         # Reaching checkpoint
