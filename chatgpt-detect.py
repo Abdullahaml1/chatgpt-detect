@@ -90,6 +90,17 @@ class UnpackedDataset(torch.utils.data.Dataset):
       def __len__(self):
           return len(self.samples)
 
+def split_dataset(val_split, test_split, dataset_len):
+    indcies = list(range(dataset_len))
+    val_split = int(len(indcies) * val_split)
+    test_split = int(len(indcies) * test_split)
+
+    np.random.shuffle(indcies)
+
+    val_indcies = indcies[:val_split]
+    test_indcies = indcies[val_split:(val_split + test_split)]
+    train_indcies = indcies[(val_split + test_split):]
+    return train_indcies, val_indcies, test_indcies
 
     
 
@@ -179,7 +190,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
     """
 
     model.train()
-    optimizer = torch.optim.Adamax(model.parameters())
+    optimizer = torch.optim.Adamax(model.parameters(), lr=5e-5)
     criterion = nn.CrossEntropyLoss()
     print_loss_total = 0
     epoch_loss_total = 0
@@ -225,7 +236,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
         # Logging train accuracy
         _, top_i = pred.topk(1, dim=1)
         train_error = torch.nonzero(labels.squeeze() - top_i.squeeze()).shape[0]
-        num_train_examples += question_text.shape[0]
+        num_train_examples += labels.shape[0]
 
         # Reaching checkpoint
         if idx % args.checkpoint == 0 and idx > 0:
@@ -352,12 +363,14 @@ if __name__ == "__main__":
     ### Load data
     dataset = load_data()
     print('Lenght of dataset', len(dataset))
+    train_idx, dev_idx, test_idx = split_dataset(0.1, 0.1, len(dataset))
 
 
 
     #get class to int mapping
     class2ind, ind2class = class_labels(['human_answers', 'chatgpt_answers'])  
-    print('Number of Classes=', len(class2ind))
+    num_classes = len(class2ind)
+    print('Number of Classes=', num_classes)
 
     if args.test:
         if args.test_type== 'paper':
@@ -367,9 +380,8 @@ if __name__ == "__main__":
 
         print('start Testing ..........')
         #### Load batchifed dataset
-        test_dataset = UnpackedDataset(dataset, class2ind)
-        test_sampler = torch.utils.data.sampler.SequentialSampler(test_dataset)
-        test_loader = torch.utils.data.DataLoader(test_dataset,
+        test_sampler = torch.utils.data.SubsetRandomSampler(test_idx)
+        test_loader = torch.utils.data.DataLoader(dataset,
                                                 batch_size=args.batch_size,
                                                 sampler=test_sampler,
                                                 num_workers=args.num_workers,
@@ -395,97 +407,73 @@ if __name__ == "__main__":
     #                     device)
     #     print(f'Dev acc={dev_acc:f}, dev_error={dev_loss:f}')
 
-    # else:
-    #     if args.resume:
-    #         print('Resuming.....')
-    #         model = torch.load(args.load_model)
-    #     else:
-    #         if args.use_glove:
-    #             model = DanModel(num_classes, len(voc),
-    #                     glove_embeddings=glove_embeddings,
-    #                     padding_idx=word2ind[kPAD])
-    #         else:
-    #             model = DanModel(num_classes, len(voc))
+    else:
+        if args.resume:
+            print('Resuming.....')
+            model = torch.load(args.load_model)
+        else:
+            model = AutoModelForSequenceClassification.from_pretrained(
+                    "roberta-base", num_labels=num_classes)
 
-    #         model.to(device)
-    #     print(model)
-    #     #### Load batchifed dataset
-    #     train_dataset = QuestionDataset(train_exs, word2ind, num_classes, class2ind)
-    #     train_sampler = torch.utils.data.sampler.RandomSampler(train_dataset)
-
-    #     ''' Debug Print '''
-    #     # train_sample = next(iter(train_dataset))
-    #     # print('Debug DebugDebugDebugDebug----------------')
-    #     # print(train_sample[0])
-    #     # print(train_sample[1])
-
-    #     dev_dataset = QuestionDataset(dev_exs, word2ind, num_classes, class2ind)
-    #     dev_sampler = torch.utils.data.sampler.SequentialSampler(dev_dataset)
-    #     dev_loader = torch.utils.data.DataLoader(dev_dataset, batch_size=args.batch_size,
-    #                                            sampler=dev_sampler,
-    #                                            num_workers=args.num_workers,
-    #                                            collate_fn=batchify)
-
-    #     ''' Debug Print '''
-    #     # train_loader_debug = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
-    #     #                                       sampler=train_sampler,
-    #     #                                       num_workers=args.num_workers,
-    #     #                                       collate_fn=batchify)
-    #     # train_sample = next(iter(train_loader_debug))
-    #     # print('Debug DebugDebugDebugDebug----------------')
-    #     # print(train_sample['text'].shape) # [batch x 60]
-    #     # print(train_sample['len'].shape) # [batch x 60]
-    #     # print(train_sample['labels'].shape) # [batch]
-    #     # print(train_sample['sample_indcies'].shape) # [batch]
-    #     # print(model(train_sample['text'],train_sample['len']).shape)
-    #     # print(train_sample['text'][0]) # [batch x 60]
+        model.to(device)
+        print(model)
 
 
-    #     ''' Training LOOOP'''
-    #     accuracy = 0
-    #     train_acc_list = []
-    #     train_loss_list =[]
-    #     dev_acc_list = []
-    #     dev_loss_list = []
-    #     best_epoch = 0
-    #     for epoch in range(args.num_epochs):
-    #         print('start epoch %d' % epoch)
-    #         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
-    #                                            sampler=train_sampler,
-    #                                            num_workers=args.num_workers,
-    #                                            collate_fn=batchify)
-    #         log_dict = train(args, model, train_loader, dev_loader, accuracy, device)
-    #         if log_dict['new_best']:
-    #             best_epoch = epoch
+        #### Load batchifed dataset
+        train_sampler = torch.utils.data.SubsetRandomSampler(train_idx)
 
-    #         accuracy = log_dict['dev_best_acc']
-    #         train_acc_list.append(log_dict['train_acc_epoch'])
-    #         train_loss_list.append(log_dict['train_loss_epoch'])
-    #         dev_acc_list.append(log_dict['dev_acc_epoch'])
-    #         dev_loss_list.append(log_dict['dev_loss_epoch'])
-    #         print('----------------------------------------------------------')
-    #         print()
+        dev_sampler = torch.utils.data.SubsetRandomSampler(dev_idx)
+        dev_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size,
+                                               sampler=dev_sampler,
+                                               num_workers=args.num_workers,
+                                               collate_fn=batchify)
 
-    #     # Plotting
-    #     train_dict = {'accuracy': np.array(train_acc_list).reshape([-1,]),
-    #                     'loss': np.array(train_loss_list).reshape([-1,])}
-    #     dev_dict = {'accuracy': np.array(dev_acc_list).reshape([-1]),
-    #                 'loss': np.array(dev_loss_list).reshape([-1])}
-    #     fig, (ax1, ax2)= plot_model(train_dict, dev_dict, num_epochs=args.num_epochs)
-    #     plt.show()
-    #     if args.use_glove:
-    #         fig.savefig(f'./glove_{args.glove_weights.split(".")[-2]}_plot.png')
-    #     else:
-    #         fig.savefig(f'./normal_50d_plot.png')
 
-    #     print(f'Best Epoch = {best_epoch}')
-    #     print('start testing:\n')
-    #     test_dataset = QuestionDataset(test_exs, word2ind, num_classes, class2ind)
-    #     test_sampler = torch.utils.data.sampler.SequentialSampler(test_dataset)
-    #     test_loader = torch.utils.data.DataLoader(test_dataset,
-    #                                             batch_size=args.batch_size,
-    #                                             sampler=test_sampler,
-    #                                             num_workers=args.num_workers,
-    #                                             collate_fn=batchify)
-    #     test_acc, test_loss = evaluate(test_loader, model, nn.CrossEntropyLoss(), device)
-    #     print(f'Test Acc={test_acc}, Test Loss={test_loss}')
+
+        ''' Training LOOOP'''
+        accuracy = 0
+        train_acc_list = []
+        train_loss_list =[]
+        dev_acc_list = []
+        dev_loss_list = []
+        best_epoch = 0
+        for epoch in range(args.num_epochs):
+            print('start epoch %d' % epoch)
+            train_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size,
+                                               sampler=train_sampler,
+                                               num_workers=args.num_workers,
+                                               collate_fn=batchify)
+            log_dict = train(args, model, train_loader, dev_loader, accuracy, device)
+            if log_dict['new_best']:
+                best_epoch = epoch
+
+            accuracy = log_dict['dev_best_acc']
+            train_acc_list.append(log_dict['train_acc_epoch'])
+            train_loss_list.append(log_dict['train_loss_epoch'])
+            dev_acc_list.append(log_dict['dev_acc_epoch'])
+            dev_loss_list.append(log_dict['dev_loss_epoch'])
+            print('----------------------------------------------------------')
+            print()
+
+        # Plotting
+        train_dict = {'accuracy': np.array(train_acc_list).reshape([-1,]),
+                        'loss': np.array(train_loss_list).reshape([-1,])}
+        dev_dict = {'accuracy': np.array(dev_acc_list).reshape([-1]),
+                    'loss': np.array(dev_loss_list).reshape([-1])}
+        fig, (ax1, ax2)= plot_model(train_dict, dev_dict, num_epochs=args.num_epochs)
+        plt.show()
+        if args.use_glove:
+            fig.savefig(f'./glove_{args.glove_weights.split(".")[-2]}_plot.png')
+        else:
+            fig.savefig(f'./normal_50d_plot.png')
+
+        print(f'Best Epoch = {best_epoch}')
+        print('start testing:\n')
+        test_sampler = torch.utils.data.SubsetRandomSampler(test_idx)
+        test_loader = torch.utils.data.DataLoader(dataset,
+                                                batch_size=args.batch_size,
+                                                sampler=test_sampler,
+                                                num_workers=args.num_workers,
+                                                collate_fn=batchify)
+        test_acc, test_loss = evaluate(test_loader, model, nn.CrossEntropyLoss(), device)
+        print(f'Test Acc={test_acc}, Test Loss={test_loss}')
