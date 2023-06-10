@@ -150,8 +150,7 @@ def evaluate(data_loader, model, device):
             labels = batch['labels']
       
               
-            logits = model(**ans_tokens) # shape [batch x num_classes]
-            print(logits[0].shape)
+            logits = model(**ans_tokens)[0] # shape [batch x num_classes]
             top_n, top_i = logits.topk(1)
             num_examples += ans_tokens.size(0)
             error += torch.nonzero(top_i.squeeze() - torch.LongTensor(labels)).size(0)
