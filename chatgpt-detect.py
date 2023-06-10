@@ -171,7 +171,7 @@ def evaluate(data_loader, model, loss_fun, device):
             error += new_error.cpu().shape[0]
 
             # Loss
-            loss = loss_fun(logits, labels)
+            loss = loss_fun(logits.cpu(), labels.cpu())
             total_loss += loss.cpu()
    
    
