@@ -286,6 +286,7 @@ if __name__ == "__main__":
 
     ### Load data
     dataset = load_data()
+    print('Lenght of dataset', len(dataset))
 
 
 
