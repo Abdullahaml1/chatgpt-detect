@@ -151,8 +151,7 @@ def evaluate(data_loader, model, device):
       
               
             logits = model(**ans_tokens) # shape [batch x num_classes]
-            print(len(logits))
-            print(logits.shape)
+            print(logits[0].shape)
             top_n, top_i = logits.topk(1)
             num_examples += ans_tokens.size(0)
             error += torch.nonzero(top_i.squeeze() - torch.LongTensor(labels)).size(0)
@@ -270,6 +269,7 @@ if __name__ == "__main__":
     parser.add_argument('--checkpoint', type=int, default=21)
     parser.add_argument("--num-workers", help="Number of workers", type=int, default=2, required=False)
     parser.add_argument('--show-dev-error-samples', action='store_true', help='Print Error Dev samples', default=False)
+    parser.add_argument("--test-type", help="{paper, model}", type=str, default='paper', required=False)
 
     args = parser.parse_args()
     #### check if using gpu is available
@@ -278,7 +278,6 @@ if __name__ == "__main__":
 
     # model name
     tokenizer = AutoTokenizer.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta")
-    model = AutoModelForSequenceClassification.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta", torchscript=True)
 
     # batchify function
     batchify = Batchify(tokenizer)
@@ -294,6 +293,10 @@ if __name__ == "__main__":
     print('Number of Classes=', len(class2ind))
 
     if args.test:
+        if args.test_type= 'paper':
+            model = AutoModelForSequenceClassification.from_pretrained("Hello-SimpleAI/chatgpt-detector-roberta", torchscript=True)
+        else:
+            pass
         print('start Testing ..........')
         #### Load batchifed dataset
         test_dataset = UnpackedDataset(dataset, class2ind)
