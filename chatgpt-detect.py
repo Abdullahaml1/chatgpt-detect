@@ -160,12 +160,13 @@ def evaluate(data_loader, model, loss_fun, device):
             ans_tokens = batch['ans_tokens']
             ans_tokens.to(device)
             labels = batch['labels']
+            labels.to(device)
       
               
             logits = model(**ans_tokens)[0] # shape [batch x num_classes]
             top_n, top_i = logits.topk(1)
             num_examples += labels.size(0)
-            error += torch.nonzero(top_i.squeeze() - torch.LongTensor(labels)).size(0)
+            error += torch.nonzero(top_i.squeeze() - labels).size(0)
 
             # Loss
             total_loss += loss_fun(logits, labels).item()
