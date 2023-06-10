@@ -150,7 +150,7 @@ def evaluate(data_loader, model, device):
             labels = batch['labels']
       
               
-            logits = model(**ans_tokens, torchscript=True) # shape [batch x num_classes]
+            logits = model(**ans_tokens) # shape [batch x num_classes]
             print(type(logits))
             print(logits.shape)
             top_n, top_i = logits.topk(1)
