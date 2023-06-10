@@ -196,7 +196,7 @@ def train(args, model, train_data_loader, dev_data_loader, accuracy, device):
 
     model.train()
     optimizer = torch.optim.Adamax(model.parameters(), lr=5e-5)
-    criterion = nn.CrossEntropyLoss().to(device)
+    criterion = nn.CrossEntropyLoss()
     print_loss_total = 0
     epoch_loss_total = 0
     start = time.time()
