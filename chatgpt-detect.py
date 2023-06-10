@@ -362,6 +362,7 @@ if __name__ == "__main__":
 
     ### Load data
     dataset = load_data()
+    dataset = UnpackedDataset(dataset)
     print('Lenght of dataset', len(dataset))
     train_idx, dev_idx, test_idx = split_dataset(0.1, 0.1, len(dataset))
 
@@ -384,11 +385,9 @@ if __name__ == "__main__":
         test_loader = torch.utils.data.DataLoader(dataset,
                                                 batch_size=args.batch_size,
                                                 sampler=test_sampler,
-                                                num_workers=args.num_workers)
-                                                # collate_fn=batchify)
-        item = next(iter(test_loader))
-        print(len(item))
-        # acc, avg_loss = evaluate(test_loader, model,nn.CrossEntropyLoss(), device)
+                                                num_workers=args.num_workers,
+                                                collate_fn=batchify)
+        acc, avg_loss = evaluate(test_loader, model,nn.CrossEntropyLoss(), device)
         print(f'Test Accuracy={acc:f}, Test Avg loss={avg_loss}')
 
     # # show Error Dev Samples
