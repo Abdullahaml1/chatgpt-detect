@@ -386,7 +386,9 @@ if __name__ == "__main__":
                                                 sampler=test_sampler,
                                                 num_workers=args.num_workers,
                                                 collate_fn=batchify)
-        acc, avg_loss = evaluate(test_loader, model,nn.CrossEntropyLoss(), device)
+        item = next(iter(test_loader))
+        print(item['labels'].shape)
+        # acc, avg_loss = evaluate(test_loader, model,nn.CrossEntropyLoss(), device)
         print(f'Test Accuracy={acc:f}, Test Avg loss={avg_loss}')
 
     # # show Error Dev Samples
