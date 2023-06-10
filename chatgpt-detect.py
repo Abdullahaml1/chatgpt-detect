@@ -188,8 +188,6 @@ class ChatgptDetectModel(nn.Module):
     architecture, saving, updating examples, and predicting examples.
     """
 
-    #### You don't need to change the parameters for the model for passing tests, might need to tinker to improve performance/handle
-    #### pretrained word embeddings/for your project code.
 
 
     def __init__(self, n_classes, vocab_size, emb_dim=50,
@@ -255,8 +253,6 @@ def plot_model(train, test, num_epochs):
 
 
 
-# You basically do not need to modify the below code 
-# But you may need to add funtions to support error analysis 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Question Type')
