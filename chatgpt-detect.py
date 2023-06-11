@@ -470,10 +470,7 @@ if __name__ == "__main__":
                     'loss': np.array(dev_loss_list).reshape([-1])}
         fig, (ax1, ax2)= plot_model(train_dict, dev_dict, num_epochs=args.num_epochs)
         plt.show()
-        if args.use_glove:
-            fig.savefig(f'./glove_{args.glove_weights.split(".")[-2]}_plot.png')
-        else:
-            fig.savefig(f'./normal_50d_plot.png')
+        fig.savefig(f'./chatgpt_detect.png')
 
         print(f'Best Epoch = {best_epoch}')
         print('start testing:\n')
